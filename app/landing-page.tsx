@@ -619,7 +619,7 @@ const FlipedBackground: React.FC<FlipedBackgroundProps> = ({ className = "" }) =
               backgroundClip: 'text',
             }}
           >
-            Fliped
+            Flipd
           </motion.h1>
           <motion.p
             className="text-xl md:text-2xl lg:text-3xl text-white/80 leading-relaxed mb-12"

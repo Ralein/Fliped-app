@@ -18,7 +18,7 @@ export default function Topbar() {
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background px-4 py-3 md:px-6 md:py-4 min-h-[64px]">
-      <div className={`flex items-center gap-4 flex-1 ${isMobile ? "ml-12" : ""}`}>
+      <div className={`flex items-center gap-4 flex-1 ${isMobile ? "ml-10" : ""}`}>
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
