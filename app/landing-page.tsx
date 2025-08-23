@@ -1,14 +1,13 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo, useCallback, forwardRef, Suspense } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { RoundedBox, PerspectiveCamera, SpotLight, useDepthBuffer } from '@react-three/drei';
 import * as THREE from 'three';
 import { Vector3, Matrix4, Quaternion } from "three";
-import { useRouter } from "next/navigation";
+import { Shield, Zap, Users, CheckCircle, ArrowRight, Star, Globe, Code, Smartphone } from 'lucide-react';
 
-// Rubik's Cube Component for Landing Page
 const RubiksCubeModel = forwardRef<any, any>((props, ref) => {
   const ANIMATION_DURATION = 1.5;
   const GAP = 0.01;
@@ -391,18 +390,17 @@ interface FlipedBackgroundProps {
   className?: string;
 }
 
-const FlipedBackground: React.FC<FlipedBackgroundProps> = ({ className = "" }) => {
-  const router = useRouter();
+// Hero Section Component
+const HeroSection = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const mouseRef = useRef({ x: 0, y: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
+  const { scrollY } = useScroll();
+  const y = useTransform(scrollY, [0, 1000], [0, -300]);
+  const opacity = useTransform(scrollY, [0, 500], [1, 0]);
 
-  const handleGetStarted = () => {
-    router.push("/dashboard");
-  };
-
-  // Particle system for floating elements
+  // Particle system
   const particlesRef = useRef<Array<{
     x: number;
     y: number;
@@ -413,18 +411,19 @@ const FlipedBackground: React.FC<FlipedBackgroundProps> = ({ className = "" }) =
     life: number;
   }>>([]);
 
-  // Initialize particles
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const particles = [];
-    for (let i = 0; i < 30; i++) { // Reduced particle count for better performance with 3D cube
+    for (let i = 0; i < 40; i++) {
       particles.push({
         x: Math.random() * window.innerWidth,
         y: Math.random() * window.innerHeight,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        size: Math.random() * 1.5 + 0.5,
-        opacity: Math.random() * 0.2 + 0.05,
-        life: Math.random() * 100 + 50
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        size: Math.random() * 2 + 1,
+        opacity: Math.random() * 0.3 + 0.1,
+        life: Math.random() * 200 + 100
       });
     }
     particlesRef.current = particles;
@@ -450,21 +449,19 @@ const FlipedBackground: React.FC<FlipedBackgroundProps> = ({ className = "" }) =
     let time = 0;
 
     const animate = () => {
-      time += 0.008;
+      time += 0.01;
       
-      // Clear canvas with black background
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw subtle animated grid
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-      ctx.lineWidth = 0.5;
+      // Grid pattern
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.lineWidth = 1;
       
-      const gridSize = 60;
-      const offsetX = (time * 15) % gridSize;
-      const offsetY = (time * 10) % gridSize;
+      const gridSize = 80;
+      const offsetX = (time * 20) % gridSize;
+      const offsetY = (time * 15) % gridSize;
 
-      // Vertical lines
       for (let x = -gridSize + offsetX; x < canvas.width + gridSize; x += gridSize) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
@@ -472,7 +469,6 @@ const FlipedBackground: React.FC<FlipedBackgroundProps> = ({ className = "" }) =
         ctx.stroke();
       }
 
-      // Horizontal lines
       for (let y = -gridSize + offsetY; y < canvas.height + gridSize; y += gridSize) {
         ctx.beginPath();
         ctx.moveTo(0, y);
@@ -480,52 +476,47 @@ const FlipedBackground: React.FC<FlipedBackgroundProps> = ({ className = "" }) =
         ctx.stroke();
       }
 
-      // Draw subtle mouse influence
-      const mouseInfluence = 100;
+      // Mouse glow effect
+      const mouseInfluence = 120;
       const gradient = ctx.createRadialGradient(
         mouseRef.current.x, mouseRef.current.y, 0,
         mouseRef.current.x, mouseRef.current.y, mouseInfluence
       );
-      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.03)');
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
       gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
       
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Update and draw particles
+      // Particles
       particlesRef.current.forEach((particle) => {
-        // Update position
         particle.x += particle.vx;
         particle.y += particle.vy;
         particle.life--;
 
-        // Gentle mouse interaction
         const dx = mouseRef.current.x - particle.x;
         const dy = mouseRef.current.y - particle.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (distance < 150) {
-          const force = (150 - distance) / 150;
-          particle.vx += (dx / distance) * force * 0.005;
-          particle.vy += (dy / distance) * force * 0.005;
+        if (distance < 200) {
+          const force = (200 - distance) / 200;
+          particle.vx += (dx / distance) * force * 0.01;
+          particle.vy += (dy / distance) * force * 0.01;
         }
 
-        // Boundary wrapping
         if (particle.x < 0) particle.x = canvas.width;
         if (particle.x > canvas.width) particle.x = 0;
         if (particle.y < 0) particle.y = canvas.height;
         if (particle.y > canvas.height) particle.y = 0;
 
-        // Reset particle if life is over
         if (particle.life <= 0) {
           particle.x = Math.random() * canvas.width;
           particle.y = Math.random() * canvas.height;
-          particle.vx = (Math.random() - 0.5) * 0.3;
-          particle.vy = (Math.random() - 0.5) * 0.3;
-          particle.life = Math.random() * 100 + 50;
+          particle.vx = (Math.random() - 0.5) * 0.5;
+          particle.vy = (Math.random() - 0.5) * 0.5;
+          particle.life = Math.random() * 200 + 100;
         }
 
-        // Draw particle
         ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
@@ -545,7 +536,6 @@ const FlipedBackground: React.FC<FlipedBackgroundProps> = ({ className = "" }) =
     };
   }, [isLoaded]);
 
-  // Mouse tracking
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       mouseRef.current.x = e.clientX;
@@ -556,73 +546,69 @@ const FlipedBackground: React.FC<FlipedBackgroundProps> = ({ className = "" }) =
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  return (
-    <div className={`fixed inset-0 w-full h-full bg-black overflow-hidden ${className}`}>
-      {/* Animated Canvas Background */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full"
-      />
+  const scrollToFeatures = () => {
+    document.getElementById('features')?.scrollIntoView({ 
+      behavior: 'smooth' 
+    });
+  };
 
-      {/* 3D Rubik's Cube Scene - Centered and Larger */}
-      <div className="absolute inset-0 w-full h-full pointer-events-none">
-        <CubeScene />
+  return (
+    <motion.section 
+      className="fixed inset-0 w-full h-full bg-black overflow-hidden z-0"
+      style={{ y, opacity }}
+    >
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+
+      {/* 3D Cube - Now with higher z-index */}
+      <div className="absolute inset-0 w-full h-full pointer-events-none z-10">
+        <div className="absolute right-10 top-1/2 transform -translate-y-1/2 w-80 h-80">
+          <CubeScene />
+        </div>
       </div>
 
-      {/* Floating geometric shapes */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(6)].map((_, i) => (
+      {/* Floating shapes */}
+      <div className="absolute inset-0 pointer-events-none z-5">
+        {[...Array(8)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 bg-white opacity-10"
+            className="absolute w-2 h-2 bg-white opacity-20"
             initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
+              x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 800),
+              y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 600),
             }}
             animate={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
+              x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 800),
+              y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 600),
               rotate: 360,
             }}
             transition={{
-              duration: 25 + Math.random() * 15,
+              duration: 20 + Math.random() * 10,
               repeat: Infinity,
               ease: "linear",
-              delay: i * 3,
+              delay: i * 2,
             }}
           />
         ))}
       </div>
 
-      {/* Gradient overlays for depth */}
-      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-black/30 to-black/70 pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-
-      {/* Content overlay - Text positioned to avoid cube */}
-      <div className="relative z-10 flex items-center justify-start min-h-screen pl-12 md:pl-20">
+      {/* Content */}
+      <div className="relative z-20 flex items-center justify-start min-h-screen pl-12 md:pl-20">
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 1.2, delay: 0.3 }}
           className="text-left max-w-2xl"
         >
-         <motion.h1
-            className="bricolage-font text-7xl md:text-8xl lg:text-9xl xl:text-[10rem] font-black text-white mb-8 tracking-tight leading-none"
+          <motion.h1
+            className="text-7xl md:text-8xl lg:text-9xl xl:text-[10rem] font-black text-white mb-8 tracking-tight leading-none"
             initial={{ opacity: 0, scale: 0.8, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 2, delay: 0.8, type: "spring", stiffness: 100 }}
-            style={{
-              textShadow: '0 0 60px rgba(255,255,255,0.4), 0 0 120px rgba(255,255,255,0.2)',
-              background: 'linear-gradient(135deg, #ffffff 0%, #f0f0f0 50%, #ffffff 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
+            transition={{ duration: 2, delay: 0.5, type: "spring", stiffness: 100 }}
           >
             Flipd
           </motion.h1>
           <motion.p
-            className="text-xl md:text-2xl lg:text-3xl text-white/80 leading-relaxed mb-12"
+            className="text-xl md:text-2xl lg:text-3xl text-white/90 leading-relaxed mb-12"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.8 }}
@@ -630,10 +616,9 @@ const FlipedBackground: React.FC<FlipedBackgroundProps> = ({ className = "" }) =
             Experience the future of<br />digital interaction
           </motion.p>
           
-          {/* Call to action button */}
           <motion.button
-            onClick={handleGetStarted}
-            className="px-10 py-5 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-xl font-medium rounded-lg hover:bg-white/20 transition-all duration-300"
+            onClick={scrollToFeatures}
+             className="px-10 py-5 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-xl font-medium rounded-lg hover:bg-white/20 transition-all duration-300"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 1.1 }}
@@ -645,41 +630,465 @@ const FlipedBackground: React.FC<FlipedBackgroundProps> = ({ className = "" }) =
         </motion.div>
       </div>
 
-      {/* Minimal corner accents */}
-      <motion.div 
-        className="absolute top-8 left-8 w-24 h-24 border-l border-t border-white/15"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 2, delay: 1.5 }}
-      />
-      <motion.div 
-        className="absolute top-8 right-8 w-24 h-24 border-r border-t border-white/15"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 2, delay: 1.7 }}
-      />
-      <motion.div 
-        className="absolute bottom-8 left-8 w-24 h-24 border-l border-b border-white/15"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 2, delay: 1.9 }}
-      />
-      <motion.div 
-        className="absolute bottom-8 right-8 w-24 h-24 border-r border-b border-white/15"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 2, delay: 2.1 }}
-      />
-    </div>
+      {/* Corner accents */}
+      {[
+        { position: "top-8 left-8", borders: "border-l border-t" },
+        { position: "top-8 right-8", borders: "border-r border-t" },
+        { position: "bottom-8 left-8", borders: "border-l border-b" },
+        { position: "bottom-8 right-8", borders: "border-r border-b" }
+      ].map((corner, i) => (
+        <motion.div 
+          key={i}
+          className={`absolute ${corner.position} w-24 h-24 ${corner.borders} border-white/30 z-30`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 2, delay: 1.5 + i * 0.2 }}
+        />
+      ))}
+    </motion.section>
   );
 };
 
-export default function FlipedLandingPage() {
+// Feature Card Component
+const FeatureCard = ({ icon: Icon, title, description, delay }: any) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.3 });
+
+  return (
+    <motion.div
+      ref={ref}
+      className="bg-white/5 border border-white/20 rounded-2xl p-8 hover:bg-white/10 hover:border-white/30 transition-all duration-500 group"
+      initial={{ opacity: 0, y: 50 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.8, delay }}
+    >
+      <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+        <Icon className="w-8 h-8 text-black" />
+      </div>
+      <h3 className="text-2xl font-bold text-white mb-4">{title}</h3>
+      <p className="text-gray-300 leading-relaxed">{description}</p>
+    </motion.div>
+  );
+};
+
+// Features Section
+const FeaturesSection = () => {
+  const features = [
+    {
+      icon: Shield,
+      title: "Enterprise Security",
+      description: "Military-grade encryption and security protocols to keep your data safe from any threat."
+    },
+    {
+      icon: Zap,
+      title: "Lightning Fast",
+      description: "Optimized performance that delivers results in milliseconds, not seconds."
+    },
+    {
+      icon: Users,
+      title: "Team Collaboration",
+      description: "Seamless collaboration tools that bring your team together, no matter where they are."
+    },
+    {
+      icon: Globe,
+      title: "Global Scale",
+      description: "Built to scale globally with infrastructure that grows with your business."
+    },
+    {
+      icon: Code,
+      title: "Developer First",
+      description: "Powerful APIs and developer tools that make integration simple and intuitive."
+    },
+    {
+      icon: Smartphone,
+      title: "Mobile Ready",
+      description: "Responsive design that works perfectly across all devices and platforms."
+    }
+  ];
+
+  return (
+    <section id="features" className="relative min-h-screen bg-black py-32 z-30">
+      <div className="container mx-auto px-6">
+        <motion.div 
+          className="text-center mb-20"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          viewport={{ once: true }}
+        >
+          <h2 className="text-6xl md:text-7xl font-bold text-white mb-6">
+            Built for the Future
+          </h2>
+          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+            Discover the powerful features that make Flipd the perfect choice for modern digital experiences.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {features.map((feature, index) => (
+            <FeatureCard
+              key={index}
+              {...feature}
+              delay={index * 0.1}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// Stats Section
+const StatsSection = () => {
+  const stats = [
+    { number: "99.9%", label: "Uptime" },
+    { number: "10M+", label: "Users" },
+    { number: "150+", label: "Countries" },
+    { number: "24/7", label: "Support" }
+  ];
+
+  return (
+    <section className="relative py-32 bg-gray-900">
+      <div className="container mx-auto px-6">
+        <div className="grid md:grid-cols-4 gap-12">
+          {stats.map((stat, index) => (
+            <motion.div
+              key={index}
+              className="text-center"
+              initial={{ opacity: 0, scale: 0.5 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: index * 0.1 }}
+              viewport={{ once: true }}
+            >
+              <div className="text-5xl md:text-6xl font-bold text-white mb-4">
+                {stat.number}
+              </div>
+              <div className="text-xl text-gray-400 uppercase tracking-wider">
+                {stat.label}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// Testimonials Section
+const TestimonialsSection = () => {
+  const testimonials = [
+    {
+      name: "Sarah Chen",
+      role: "CEO, TechStart",
+      content: "Flipd transformed how we approach digital experiences. The results were immediate and impressive.",
+      rating: 5
+    },
+    {
+      name: "Marcus Johnson", 
+      role: "CTO, Innovation Labs",
+      content: "The security features and performance optimization exceeded our expectations completely.",
+      rating: 5
+    },
+    {
+      name: "Elena Rodriguez",
+      role: "Product Manager, GlobalCorp", 
+      content: "Outstanding platform with incredible support. Our team productivity increased by 300%.",
+      rating: 5
+    }
+  ];
+
+  return (
+    <section className="relative py-32 bg-black">
+      <div className="container mx-auto px-6">
+        <motion.div 
+          className="text-center mb-20"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          viewport={{ once: true }}
+        >
+          <h2 className="text-6xl md:text-7xl font-bold text-white mb-6">
+            Trusted by Leaders
+          </h2>
+          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+            See what industry leaders are saying about their experience with Flipd.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {testimonials.map((testimonial, index) => (
+            <motion.div
+              key={index}
+              className="bg-white/5 border border-white/20 rounded-2xl p-8"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: index * 0.2 }}
+              viewport={{ once: true }}
+            >
+              <div className="flex mb-4">
+                {[...Array(testimonial.rating)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 text-white fill-current" />
+                ))}
+              </div>
+              <p className="text-gray-300 mb-6 text-lg leading-relaxed">
+                "{testimonial.content}"
+              </p>
+              <div>
+                <div className="font-semibold text-white">{testimonial.name}</div>
+                <div className="text-gray-400">{testimonial.role}</div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// Pricing Section
+const PricingSection = () => {
+  const plans = [
+    {
+      name: "Starter",
+      price: "Free",
+      description: "Perfect for individuals and small projects",
+      features: [
+        "Up to 5 projects",
+        "Basic security features",
+        "Community support",
+        "1GB storage"
+      ],
+      popular: false
+    },
+    {
+      name: "Professional",
+      price: "$29",
+      period: "/month",
+      description: "Ideal for growing teams and businesses",
+      features: [
+        "Unlimited projects",
+        "Advanced security",
+        "Priority support",
+        "100GB storage",
+        "Team collaboration",
+        "API access"
+      ],
+      popular: true
+    },
+    {
+      name: "Enterprise",
+      price: "Custom",
+      description: "Tailored solutions for large organizations",
+      features: [
+        "Everything in Professional",
+        "Custom integrations",
+        "Dedicated support",
+        "Unlimited storage",
+        "SLA guarantee",
+        "White-label options"
+      ],
+      popular: false
+    }
+  ];
+
+  return (
+    <section className="relative py-32 bg-black">
+      <div className="container mx-auto px-6">
+        <motion.div 
+          className="text-center mb-20"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          viewport={{ once: true }}
+        >
+          <h2 className="text-6xl md:text-7xl font-bold text-white mb-6">
+            Simple Pricing
+          </h2>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            Choose the perfect plan for your needs. Upgrade or downgrade at any time.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+          {plans.map((plan, index) => (
+            <motion.div
+              key={index}
+              className={`relative bg-white/5 backdrop-blur-sm border rounded-2xl p-8 ${
+                plan.popular 
+                  ? 'border-blue-500 bg-gradient-to-b from-blue-500/10 to-purple-600/10' 
+                  : 'border-white/10'
+              }`}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: index * 0.2 }}
+              viewport={{ once: true }}
+            >
+              {plan.popular && (
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <div className="bg-white text-black px-6 py-2 rounded-full text-sm font-semibold">
+                    Most Popular
+                  </div>
+                </div>
+              )}
+              
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
+                <div className="text-4xl font-bold text-white mb-2">
+                  {plan.price}
+                  {plan.period && <span className="text-lg text-gray-400">{plan.period}</span>}
+                </div>
+                <p className="text-gray-300">{plan.description}</p>
+              </div>
+
+              <ul className="space-y-4 mb-8">
+                {plan.features.map((feature, featureIndex) => (
+                  <li key={featureIndex} className="flex items-center text-gray-300">
+                    <CheckCircle className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+
+              <button className={`w-full py-4 rounded-xl font-semibold transition-all duration-300 ${
+                plan.popular
+                  ? 'bg-white/10 text-white border border-white/20 hover:scale-105'
+                  : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
+              }`}>
+                {plan.name === 'Enterprise' ? 'Contact Sales' : 'Get Started'}
+              </button>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// CTA Section
+const CTASection = () => {
+  const handleGetStarted = () => {
+    // You can replace this with your actual routing logic
+    alert('Starting your journey with Flipd!');
+  };
+
+  const handleScheduleDemo = () => {
+    // You can replace this with your actual demo scheduling logic
+    alert('Demo scheduled!');
+  };
+
+  return (
+    <section className="relative py-32 bg-black">
+      <div className="container mx-auto px-6 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          viewport={{ once: true }}
+        >
+          <h2 className="text-6xl md:text-7xl font-bold text-white mb-8">
+            Ready to Get Started?
+          </h2>
+          <p className="text-xl text-white/80 max-w-3xl mx-auto mb-12">
+            Join thousands of teams already using Flipd to transform their digital experiences.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <motion.button
+              onClick={handleGetStarted}
+              className="px-12 py-6 bg-white text-black text-xl font-semibold rounded-xl hover:bg-gray-100 transition-all duration-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Start Free Trial
+            </motion.button>
+            <motion.button
+              onClick={handleScheduleDemo}
+              className="px-12 py-6 bg-transparent border-2 border-white text-white text-xl font-semibold rounded-xl hover:bg-white hover:text-black transition-all duration-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Schedule Demo
+            </motion.button>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+// Footer
+const Footer = () => {
+  const footerLinks = {
+    Product: ["Features", "Security", "Pricing", "API"],
+    Company: ["About", "Careers", "Blog", "Contact"],
+    Resources: ["Documentation", "Help Center", "Community", "Status"],
+    Legal: ["Privacy", "Terms", "Security", "Compliance"]
+  };
+
+  return (
+    <footer className="relative bg-black border-t border-white/10">
+      <div className="container mx-auto px-6 py-16">
+        <div className="grid lg:grid-cols-5 gap-12">
+          <div className="lg:col-span-2">
+            <div className="text-4xl font-bold text-white mb-4">Flipd</div>
+            <p className="text-gray-400 max-w-md">
+              Experience the future of digital interaction with our cutting-edge platform.
+            </p>
+            <div className="flex space-x-4 mt-8">
+              {['Twitter', 'LinkedIn', 'GitHub'].map((social) => (
+                <div key={social} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer">
+                  <div className="text-white text-sm">{social[0]}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {Object.entries(footerLinks).map(([category, links]) => (
+            <div key={category}>
+              <h4 className="text-white font-semibold mb-6">{category}</h4>
+              <ul className="space-y-4">
+                {links.map((link) => (
+                  <li key={link}>
+                    <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                      {link}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-white/10 mt-16 pt-8 text-center text-gray-400">
+          <p>&copy; 2024 Flipd. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+// Main Landing Page Component
+export default function IntegratedFlipedLandingPage() {
   const [isClient, setIsClient] = useState(false);
  
   useEffect(() => {
     setIsClient(true);
   }, []);
  
-  return <>{isClient && <FlipedBackground />}</>;
+  if (!isClient) return null;
+
+  return (
+    <div className="relative">
+      <HeroSection />
+      <div className="h-screen" />
+      <div className="relative z-20 bg-black">
+        <FeaturesSection />
+        <StatsSection />
+        <TestimonialsSection />
+        <PricingSection />
+        <CTASection />
+        <Footer />
+      </div>
+    </div>
+  );
 }
