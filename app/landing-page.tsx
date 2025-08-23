@@ -364,7 +364,7 @@ function RubiksCubeScene() {
       <CameraController />
 
       <Suspense fallback={null}>
-        <RubiksCubeModel position={[0, 0, 0]} scale={1.2} />
+        <RubiksCubeModel position={[0, 0, 0]} scale={1.4} />
       </Suspense>
     </>
   );
